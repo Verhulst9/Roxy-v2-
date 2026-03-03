@@ -99,13 +99,13 @@ export function LeftSidebar({
   const handleBatchDelete = useCallback(() => {
     if (selectedSessions.size === 0) return;
     const count = selectedSessions.size;
-    if (confirm(`确定要删除选中的 ${count} 个对话吗？`)) {
+    if (confirm(t.batchDeleteConfirm(count))) {
       selectedSessions.forEach(sessionId => {
         deleteSession(sessionId);
       });
       exitBatchMode();
     }
-  }, [selectedSessions, deleteSession, exitBatchMode]);
+  }, [selectedSessions, deleteSession, exitBatchMode, t.batchDeleteConfirm]);
 
   // Handle delete button click
   const handleDeleteClick = useCallback((e: React.MouseEvent, sessionId: string) => {
@@ -184,8 +184,8 @@ export function LeftSidebar({
         <button
           className="galgame-sidebar__toggle-btn"
           onClick={toggleLeftSidebarCollapse}
-          aria-label={leftSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={leftSidebarCollapsed ? '展开' : '折叠'}
+          aria-label={leftSidebarCollapsed ? t.expand : t.collapse}
+          title={leftSidebarCollapsed ? t.expand : t.collapse}
         >
           {leftSidebarCollapsed ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -225,19 +225,19 @@ export function LeftSidebar({
             {t.recentHistory}
             {batchMode && (
               <span className="galgame-sidebar__batch-actions">
-                <span className="galgame-sidebar__batch-count">{selectedSessions.size} 已选择</span>
+                <span className="galgame-sidebar__batch-count">{selectedSessions.size} {t.selected}</span>
                 <button
                   className="galgame-sidebar__batch-cancel"
                   onClick={exitBatchMode}
                 >
-                  取消
+                  {t.cancel}
                 </button>
                 <button
                   className="galgame-sidebar__batch-delete"
                   onClick={handleBatchDelete}
                   disabled={selectedSessions.size === 0}
                 >
-                  删除
+                  {t.deleteChat}
                 </button>
               </span>
             )}
@@ -257,7 +257,7 @@ export function LeftSidebar({
               onMouseDown={() => handleMouseDown(session)}
               onMouseUp={handleMouseUpOrLeave}
               onMouseLeave={handleMouseUpOrLeave}
-              title={batchMode ? '点击选择/取消' : session.title}
+              title={batchMode ? t.clickToSelect : session.title}
             >
               {batchMode && (
                 <span className="galgame-sidebar__checkbox">

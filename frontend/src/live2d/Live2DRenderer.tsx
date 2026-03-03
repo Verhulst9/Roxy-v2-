@@ -456,7 +456,7 @@ export function Live2DRenderer({
 
   // Breathing animation control
   useEffect(() => {
-    if (!modelRef.current || live2dSettings === undefined) return;
+    if (!modelRef.current || live2dSettings == null) return;
 
     if (live2dSettings.breathingAnimation) {
       // Start breathing animation

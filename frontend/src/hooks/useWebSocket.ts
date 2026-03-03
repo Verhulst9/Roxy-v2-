@@ -39,8 +39,17 @@ export function useWebSocket(
   const reconnectAttemptsRef = useRef<number>(0);
   const sendMessageRef = useRef<((type: WSMessageType, data: unknown) => void) | null>(null);
   const latestOptionsRef = useRef<UseWebSocketOptions>(options);
+  const urlRef = useRef<string>(url);
+
+  // Keep urlRef in sync with url prop
+  useEffect(() => {
+    urlRef.current = url;
+  }, [url]);
 
   const connect = useCallback(() => {
+    // Get latest url from ref to avoid closure issues
+    const currentUrl = urlRef.current;
+
     // Check if a connection is already in progress or active
     const currentState = wsRef.current?.readyState;
     if (currentState === WebSocket.OPEN ||
@@ -60,7 +69,7 @@ export function useWebSocket(
     latestOptionsRef.current.onStateChange?.('connecting');
 
     try {
-      const ws = new WebSocket(url);
+      const ws = new WebSocket(currentUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -126,7 +135,7 @@ export function useWebSocket(
       setConnectionState('error');
       latestOptionsRef.current.onStateChange?.('error');
     }
-  }, [url]);
+  }, []); // No dependencies - uses urlRef for latest url value
 
   const disconnect = useCallback(() => {
     // 清除所有超时和引用
@@ -157,8 +166,8 @@ export function useWebSocket(
       const ws = wsRef.current;
       if (!ws) return;
       if (ws.readyState === WebSocket.OPEN) {
-        // Backend expects "payload" field for user_text messages
-        const message: WSMessage = type === 'user_text'
+        // Backend expects "payload" field for user_text and audio_blob messages
+        const message: WSMessage = (type === 'user_text' || type === 'audio_blob')
           ? { type, payload: data, timestamp: Date.now() }
           : { type, data, timestamp: Date.now() };
         ws.send(JSON.stringify(message));

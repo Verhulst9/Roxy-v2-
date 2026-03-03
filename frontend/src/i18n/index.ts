@@ -66,9 +66,19 @@ export interface Translations {
   deleteChat: string;
   deleteConfirm: string;
   deleteConfirmMessage: string;
+  batchDeleteConfirm: (count: number) => string;
   untitledChat: string;
   today: string;
   yesterday: string;
+
+  // Batch mode
+  selected: string;
+  cancel: string;
+  clickToSelect: string;
+
+  // Sidebar toggle
+  expand: string;
+  collapse: string;
 
   // Input
   typeMessage: string;
@@ -118,9 +128,15 @@ const translations: Record<Language, Translations> = {
     deleteChat: 'Delete',
     deleteConfirm: 'Confirm Delete',
     deleteConfirmMessage: 'Are you sure you want to delete this conversation?',
+    batchDeleteConfirm: (count: number) => `Are you sure you want to delete ${count} selected conversation${count > 1 ? 's' : ''}?`,
     untitledChat: 'Untitled Chat',
     today: 'Today',
     yesterday: 'Yesterday',
+    selected: 'selected',
+    cancel: 'Cancel',
+    clickToSelect: 'Click to select/deselect',
+    expand: 'Expand',
+    collapse: 'Collapse',
     typeMessage: 'Type a message...',
     recording: 'Recording...',
     send: 'Send',
@@ -166,9 +182,15 @@ const translations: Record<Language, Translations> = {
     deleteChat: '删除',
     deleteConfirm: '确认删除',
     deleteConfirmMessage: '确定要删除这个对话吗？',
+    batchDeleteConfirm: (count: number) => `确定要删除选中的 ${count} 个对话吗？`,
     untitledChat: '未命名对话',
     today: '今天',
     yesterday: '昨天',
+    selected: '已选择',
+    cancel: '取消',
+    clickToSelect: '点击选择/取消',
+    expand: '展开',
+    collapse: '折叠',
     typeMessage: '输入消息...',
     recording: '录音中...',
     send: '发送',
@@ -214,9 +236,15 @@ const translations: Record<Language, Translations> = {
     deleteChat: '削除',
     deleteConfirm: '削除の確認',
     deleteConfirmMessage: 'この会話を削除してもよろしいですか？',
+    batchDeleteConfirm: (count: number) => `選択した ${count} 件の会話を削除してもよろしいですか？`,
     untitledChat: '無題のチャット',
     today: '今日',
     yesterday: '昨日',
+    selected: '件を選択',
+    cancel: 'キャンセル',
+    clickToSelect: 'クリックして選択/解除',
+    expand: '展開',
+    collapse: '折りたたみ',
     typeMessage: 'メッセージを入力...',
     recording: '録音中...',
     send: '送信',

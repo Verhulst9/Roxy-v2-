@@ -273,9 +273,12 @@ function App() {
     if (chatState.currentSessionId) {
       loadSession(chatState.currentSessionId).then(messages => {
         setMessageHistory(messages);
-        // Set current dialog to last message if available
+        // Set current dialog to last message if available, otherwise clear it
         if (messages.length > 0) {
           setCurrentDialog(messages[messages.length - 1]);
+        } else {
+          // Clear current dialog for new/empty sessions
+          setCurrentDialog(null);
         }
       });
     }
