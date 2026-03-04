@@ -10,6 +10,7 @@ interface VoiceInputButtonProps {
   onRecordingComplete: (audioBlob: Blob, base64Audio: string) => void;
   disabled?: boolean;
   className?: string;
+  micSensitivity?: number; // Microphone sensitivity (0.5 - 2.0)
 }
 
 interface RecordingState {
@@ -21,6 +22,7 @@ export function VoiceInputButton({
   onRecordingComplete,
   disabled = false,
   className = '',
+  micSensitivity = 1.0,
 }: VoiceInputButtonProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>({
     isRecording: false,
@@ -88,6 +90,9 @@ export function VoiceInputButton({
 
     recorderRef.current = recorder;
 
+    // Set microphone sensitivity
+    recorder.setSensitivity(micSensitivity);
+
     try {
       await recorder.startRecording();
     } catch (error) {
@@ -99,7 +104,7 @@ export function VoiceInputButton({
     } finally {
       setIsTransitioning(false);
     }
-  }, [isTransitioning]);
+  }, [isTransitioning, micSensitivity]);
 
   // 停止录音
   const handleStopRecording = useCallback(async () => {

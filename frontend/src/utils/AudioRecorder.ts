@@ -19,6 +19,7 @@ export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
+  private gainNode: GainNode | null = null;
   private microphone: MediaStreamAudioSourceNode | null = null;
   private stream: MediaStream | null = null;
   private chunks: Blob[] = [];
@@ -27,6 +28,7 @@ export class AudioRecorder {
 
   private options: AudioRecorderOptions;
   private isRecording: boolean = false;
+  private sensitivity: number = 1.0; // Microphone sensitivity (0.5 - 2.0)
 
   // 默认支持的 MIME 类型
   private static readonly MIME_TYPES = [
@@ -91,9 +93,14 @@ export class AudioRecorder {
       this.analyser.fftSize = 256;
       this.analyser.smoothingTimeConstant = 0.8;
 
-      // 连接麦克风到分析器
+      // 创建增益节点用于灵敏度控制
+      this.gainNode = this.audioContext.createGain();
+      this.gainNode.gain.value = this.sensitivity;
+
+      // 连接麦克风 -> 增益节点 -> 分析器
       this.microphone = this.audioContext.createMediaStreamSource(this.stream);
-      this.microphone.connect(this.analyser);
+      this.microphone.connect(this.gainNode);
+      this.gainNode.connect(this.analyser);
 
       // 创建 MediaRecorder
       const mimeType = this.getSupportedMimeType();
@@ -183,6 +190,25 @@ export class AudioRecorder {
   }
 
   /**
+   * 设置麦克风灵敏度 (0.5 - 2.0)
+   * 1.0 = 正常, < 1.0 = 降低, > 1.0 = 提高
+   */
+  setSensitivity(sensitivity: number): void {
+    // Clamp between 0.5 and 2.0
+    this.sensitivity = Math.max(0.5, Math.min(2.0, sensitivity));
+    if (this.gainNode) {
+      this.gainNode.gain.value = this.sensitivity;
+    }
+  }
+
+  /**
+   * 获取当前麦克风灵敏度
+   */
+  getSensitivity(): number {
+    return this.sensitivity;
+  }
+
+  /**
    * 开始监测音量级别
    */
   private startAudioLevelMonitoring(): void {
@@ -244,6 +270,12 @@ export class AudioRecorder {
     if (this.microphone) {
       this.microphone.disconnect();
       this.microphone = null;
+    }
+
+    // 断开增益节点
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+      this.gainNode = null;
     }
 
     // 关闭 AudioContext

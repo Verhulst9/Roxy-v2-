@@ -14,6 +14,7 @@ interface TextInputProps {
   placeholder?: string;
   className?: string;
   wsSend?: (type: WSMessageType, data: unknown) => void;
+  micSensitivity?: number; // Microphone sensitivity (0.5 - 2.0)
 }
 
 export function TextInput({
@@ -22,6 +23,7 @@ export function TextInput({
   placeholder,
   className = '',
   wsSend,
+  micSensitivity = 1.0,
 }: TextInputProps) {
   const { t } = useLanguage();
   const [text, setText] = useState('');
@@ -92,6 +94,7 @@ export function TextInput({
         onRecordingComplete={handleRecordingComplete}
         disabled={disabled || isRecording || !wsSend}
         className="voice-input-wrapper"
+        micSensitivity={micSensitivity}
       />
 
       {/* Error message toast */}

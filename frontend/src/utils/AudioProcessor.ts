@@ -5,6 +5,7 @@
 export class AudioProcessor {
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
+  private gainNode: GainNode | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   private isPlaying = false;
   private animationFrameId: number | null = null;
@@ -13,6 +14,9 @@ export class AudioProcessor {
   // Lip-sync parameters
   private mouthParam = 0; // 0.0 - 1.0
   private onMouthParamChange?: (value: number) => void;
+
+  // Volume control
+  private volume = 0.8; // Default volume 0.0 - 1.0
 
   constructor(onMouthParamChange?: (value: number) => void) {
     this.onMouthParamChange = onMouthParamChange;
@@ -29,6 +33,10 @@ export class AudioProcessor {
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 512;
       this.analyser.smoothingTimeConstant = 0.1;
+
+      // Create gain node for volume control
+      this.gainNode = this.audioContext.createGain();
+      this.gainNode.gain.value = this.volume;
     }
 
     if (this.audioContext.state === 'suspended') {
@@ -82,7 +90,8 @@ export class AudioProcessor {
       const source = this.audioContext!.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.analyser!);
-      this.analyser!.connect(this.audioContext!.destination);
+      this.analyser!.connect(this.gainNode!);
+      this.gainNode!.connect(this.audioContext!.destination);
 
       this.currentSource = source;
       this.isPlaying = true;
@@ -210,11 +219,39 @@ export class AudioProcessor {
   }
 
   /**
+   * Set volume for audio playback (0.0 - 1.0)
+   */
+  setVolume(volume: number): void {
+    // Clamp volume between 0 and 1
+    this.volume = Math.max(0, Math.min(1, volume));
+    if (this.gainNode) {
+      this.gainNode.gain.value = this.volume;
+    }
+  }
+
+  /**
+   * Get current volume
+   */
+  getVolume(): number {
+    return this.volume;
+  }
+
+  /**
    * Clean up resources
    */
   dispose(): void {
     // Stop any playing audio
     this.stop();
+
+    // Disconnect gain node from destination before cleanup
+    if (this.gainNode) {
+      try {
+        this.gainNode.disconnect();
+      } catch {
+        // Already disconnected
+      }
+      this.gainNode = null;
+    }
 
     // Disconnect analyser from destination before cleanup
     if (this.analyser) {

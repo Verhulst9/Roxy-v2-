@@ -284,6 +284,13 @@ function App() {
     }
   }, [chatState.currentSessionId, loadSession]);
 
+  // Apply TTS volume setting to AudioProcessor
+  useEffect(() => {
+    if (audioProcessorRef.current) {
+      audioProcessorRef.current.setVolume(settings.audio.ttsVolume);
+    }
+  }, [settings.audio.ttsVolume]);
+
   // Handle user input
   const handleSendMessage = useCallback((text: string) => {
     if (text.trim()) {
@@ -323,8 +330,10 @@ function App() {
           }
         }
       });
+      // Set initial volume from settings
+      audioProcessorRef.current.setVolume(settings.audio.ttsVolume);
     }
-  }, [config.enableLipSync]);
+  }, [config.enableLipSync, settings.audio.ttsVolume]);
 
   // Handle Live2D error
   const handleLive2DError = useCallback((error: Error) => {
@@ -379,6 +388,7 @@ function App() {
           onSend={handleSendMessage}
           wsSend={sendMessage}
           disabled={connectionState !== 'connected'}
+          micSensitivity={settings.audio.micSensitivity}
         />
       </MainViewContainer>
 
