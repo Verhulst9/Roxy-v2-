@@ -8,6 +8,9 @@ import * as PIXI from 'pixi.js';
 import { Live2DModel } from 'pixi-live2d-display/cubism2';
 import type { Live2DModelConfig, Live2DParam, Emotion } from '../types';
 import { getModelUrl } from '../contexts/SettingsContext';
+import { createScopedLogger } from '../utils/debug';
+
+const debug = createScopedLogger('Live2D');
 
 // Expose PIXI to window for pixi-live2d-display
 if (typeof window !== 'undefined') {
@@ -257,7 +260,7 @@ export function Live2DRenderer({
           onModelLoadedRef.current?.(model);
         }
       } catch (error) {
-        console.error('[Live2D] Failed to load model:', error);
+        debug.error(' Failed to load model:', error);
         // Check if component is still mounted before updating state
         if (mountedRef.current) {
           const errorMsg = error instanceof Error ? error.message : String(error);
@@ -277,7 +280,7 @@ export function Live2DRenderer({
         app.renderer.resize(window.innerWidth, window.innerHeight);
         applySettings(model);
       } catch (e) {
-        console.warn('[Live2D] Resize error:', e);
+        debug.warn(' Resize error:', e);
       }
     };
 
@@ -298,7 +301,7 @@ export function Live2DRenderer({
           }
           model.destroy({ children: true });
         } catch (e) {
-          console.warn('[Live2D] Model cleanup error:', e);
+          debug.warn(' Model cleanup error:', e);
         }
       }
 
@@ -311,7 +314,7 @@ export function Live2DRenderer({
             texture: true
           });
         } catch (e) {
-          console.warn('[Live2D] App cleanup error:', e);
+          debug.warn(' App cleanup error:', e);
         }
       }
     };
@@ -362,7 +365,7 @@ export function Live2DRenderer({
         setCurrentModelId(newModelId);
         onModelLoadedRef.current?.(newModel);
       } catch (error) {
-        console.error('[Live2D] Failed to switch model:', error);
+        debug.error(' Failed to switch model:', error);
         if (mountedRef.current) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           setLoadError(errorMsg);
@@ -541,13 +544,13 @@ export function Live2DRenderer({
 // Helper functions for model control
 export function setModelParams(model: any, params: Live2DParam[]): void {
   if (!model) {
-    console.log('[Live2D] setModelParams: model is null');
+    debug.log(' setModelParams: model is null');
     return;
   }
 
   const internalModel = model.internalModel;
   if (!internalModel) {
-    console.log('[Live2D] setModelParams: internalModel is null');
+    debug.log(' setModelParams: internalModel is null');
     return;
   }
 
@@ -557,16 +560,16 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
 
   // Check if model has settings (Cubism 2.0)
   if (internalModel.settings) {
-    console.log('[Live2D] internalModel has settings (Cubism 2.0)');
+    debug.log(' internalModel has settings (Cubism 2.0)');
     // Try to list available parameters
     const settings = internalModel.settings;
-    console.log('[Live2D] settings keys:', Object.keys(settings));
+    debug.log(' settings keys:', Object.keys(settings));
     // Try getParamIndex
     try {
       const testIndex = settings.getParamIndex('ParamEyeLOpen');
-      console.log('[Live2D] getParamIndex("ParamEyeLOpen"):', testIndex);
+      debug.log(' getParamIndex("ParamEyeLOpen"):', testIndex);
     } catch (e) {
-      console.log('[Live2D] getParamIndex error:', e);
+      debug.log(' getParamIndex error:', e);
     }
   }
 
@@ -579,7 +582,7 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
         // Method 1: Try using parameter name directly as string ID
         if (typeof live2DModel.setParamFloat === 'function') {
           live2DModel.setParamFloat(name, value);
-          console.log('[Live2D] Cubism2: Set param', name, '=', value, '(using string ID)');
+          debug.log(' Cubism2: Set param', name, '=', value, '(using string ID)');
           return;
         }
 
@@ -588,12 +591,12 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
           const paramIndex = internalModel.settings.getParamIndex(name);
           if (paramIndex !== undefined && paramIndex >= 0) {
             live2DModel.setParamFloat(paramIndex, value);
-            console.log('[Live2D] Cubism2: Set param', name, '=', value, 'at index', paramIndex);
+            debug.log(' Cubism2: Set param', name, '=', value, 'at index', paramIndex);
             return;
           }
         }
 
-        console.log('[Live2D] Cubism2: Param NOT found:', name);
+        debug.log(' Cubism2: Param NOT found:', name);
       }
 
       // Try Cubism 4.0 approach
@@ -604,14 +607,14 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
           const param = (coreModel as any)._parameters.find((p: any) => p.name === name);
           if (param) {
             param.value = value;
-            console.log('[Live2D] Cubism4: Set param', name, '=', value);
+            debug.log(' Cubism4: Set param', name, '=', value);
             return;
           }
         }
-        console.log('[Live2D] Cubism4: Param NOT found:', name);
+        debug.log(' Cubism4: Param NOT found:', name);
       }
     } catch (e) {
-      console.log('[Live2D] Error setting param', name, ':', e);
+      debug.log(' Error setting param', name, ':', e);
     }
   });
 }

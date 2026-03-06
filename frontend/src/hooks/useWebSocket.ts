@@ -8,6 +8,9 @@ import type {
   ConnectionState,
   WSMessageType,
 } from '../types';
+import { createScopedLogger } from '../utils/debug';
+
+const debug = createScopedLogger('WS');
 
 // 常量配置
 const DEFAULT_RECONNECT_INTERVAL = 3000;
@@ -95,12 +98,12 @@ export function useWebSocket(
             sendMessageRef.current?.('pong', { timestamp: Date.now() });
           }
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          debug.error('Failed to parse WebSocket message:', error);
         }
       };
 
       ws.onerror = (_error) => {
-        console.error('WebSocket error occurred');
+        debug.error('WebSocket error occurred');
         setConnectionState('error');
         latestOptionsRef.current.onStateChange?.('error');
       };
@@ -131,7 +134,7 @@ export function useWebSocket(
         }
       };
     } catch (error) {
-      console.error('Failed to create WebSocket:', error);
+      debug.error('Failed to create WebSocket:', error);
       setConnectionState('error');
       latestOptionsRef.current.onStateChange?.('error');
     }

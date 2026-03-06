@@ -8,6 +8,7 @@ import { config } from './config';
 import { Live2DRenderer } from './live2d/Live2DRenderer';
 import { AudioProcessor } from './utils/AudioProcessor';
 import { useWebSocket } from './hooks/useWebSocket';
+import { debug } from './utils/debug';
 import type { Live2DState, WSMessage, DialogState } from './types';
 import { useTransition } from './components/transitions';
 import { P5RTheme, TRANSITION_TYPES } from './utils/styles/theme';
@@ -35,6 +36,7 @@ import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ChatHistoryProvider, useChatHistory } from './contexts/ChatHistoryContext';
+import { DebugProvider } from './contexts/DebugContext';
 
 // Error Boundary
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: any}> {
@@ -126,7 +128,7 @@ function App() {
           setAudioContextReady(true);
           audioContextReadyRef.current = true;
         } catch (e) {
-          console.warn('[App] Failed to initialize AudioContext:', e);
+          debug.warn('[App] Failed to initialize AudioContext:', e);
         }
       }
     };
@@ -199,13 +201,13 @@ function App() {
         if (enableAudioRef.current && audioProcessorRef.current && audioContextReadyRef.current) {
           const audioData = payload as { audio: string; format: string; sampleRate: number };
           audioProcessorRef.current.play(audioData.audio)
-            .catch(e => console.error('[App] Audio playback failed:', e));
+            .catch(e => debug.error('[App] Audio playback failed:', e));
         }
         break;
 
       case 'emotion': {
         const newEmotion = (payload as { emotion: string }).emotion;
-        console.log('[App] Emotion received:', newEmotion);
+        debug.log('[App] Emotion received:', newEmotion);
         // Trigger transition on emotion change (using ref to get latest emotion)
         const prevEmotion = currentEmotionRef.current;
         if (newEmotion !== prevEmotion && newEmotion !== 'neutral' && triggerRef.current) {
@@ -214,7 +216,7 @@ function App() {
         setCurrentEmotion(newEmotion);
         // Apply emotion to Live2D model if available
         if (modelRef.current) {
-          console.log('[App] Applying emotion to model:', newEmotion);
+          debug.log('[App] Applying emotion to model:', newEmotion);
           import('./live2d/Live2DRenderer').then(({ setModelEmotion }) => {
             setModelEmotion(modelRef.current, newEmotion as any);
           });
@@ -326,7 +328,7 @@ function App() {
               setModelParams(modelRef.current, [{ name: 'ParamMouthOpenY', value: mouthParam }]);
             });
           } catch (e) {
-            console.warn('[App] Failed to update lip-sync:', e);
+            debug.warn('[App] Failed to update lip-sync:', e);
           }
         }
       });
@@ -337,7 +339,7 @@ function App() {
 
   // Handle Live2D error
   const handleLive2DError = useCallback((error: Error) => {
-    console.error('Live2D error:', error);
+    debug.error('Live2D error:', error);
   }, []);
 
   return (
@@ -423,13 +425,15 @@ function ThemeAwareApp() {
 
   return (
     <div data-theme={settings.general.theme}>
-      <ChatHistoryProvider>
-        <LanguageProvider>
-          <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
-            <App />
-          </SidebarProvider>
-        </LanguageProvider>
-      </ChatHistoryProvider>
+      <DebugProvider isDebugMode={settings.advanced.debugMode}>
+        <ChatHistoryProvider>
+          <LanguageProvider>
+            <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
+              <App />
+            </SidebarProvider>
+          </LanguageProvider>
+        </ChatHistoryProvider>
+      </DebugProvider>
     </div>
   );
 }

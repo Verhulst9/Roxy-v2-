@@ -2,6 +2,10 @@
  * Audio Processor - Handles audio playback and lip-sync
  */
 
+import { createScopedLogger } from './debug';
+
+const debug = createScopedLogger('AudioProcessor');
+
 export class AudioProcessor {
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
@@ -111,7 +115,7 @@ export class AudioProcessor {
         }
       };
     } catch (error) {
-      console.error('Error playing audio:', error);
+      debug.error('Error playing audio:', error);
       this.cleanupAfterPlayback();
     }
   }

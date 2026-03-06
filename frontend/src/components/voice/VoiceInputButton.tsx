@@ -5,6 +5,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AudioRecorder } from '../../utils/AudioRecorder';
+import { createScopedLogger } from '../../utils/debug';
+
+const debug = createScopedLogger('VoiceInput');
 
 interface VoiceInputButtonProps {
   onRecordingComplete: (audioBlob: Blob, base64Audio: string) => void;
@@ -96,7 +99,7 @@ export function VoiceInputButton({
     try {
       await recorder.startRecording();
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      debug.error('Failed to start recording:', error);
       setRecordingState({
         isRecording: false,
         duration: 0,
@@ -129,7 +132,7 @@ export function VoiceInputButton({
       });
       setAudioLevel(0);
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      debug.error('Failed to stop recording:', error);
     } finally {
       setIsTransitioning(false);
     }

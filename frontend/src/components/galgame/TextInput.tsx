@@ -6,7 +6,10 @@
 import { useState, useRef } from 'react';
 import { VoiceInputButton } from '../voice/VoiceInputButton';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { createScopedLogger } from '../../utils/debug';
 import type { WSMessage, WSMessageType } from '../../types';
+
+const debug = createScopedLogger('TextInput');
 
 interface TextInputProps {
   onSend: (text: string) => void;
@@ -51,7 +54,7 @@ export function TextInput({
   const handleRecordingComplete = async (blob: Blob, base64Audio: string) => {
     if (!wsSend) {
       const errorMsg = 'WebSocket not connected. Voice input requires a connection.';
-      console.warn('[TextInput] ' + errorMsg);
+      debug.warn('[TextInput] ' + errorMsg);
       setErrorMessage(errorMsg);
       setTimeout(() => setErrorMessage(null), 3000);
       setIsRecording(false);
@@ -79,7 +82,7 @@ export function TextInput({
     try {
       wsSend('audio_blob', message.payload);
     } catch (error) {
-      console.error('Failed to send audio:', error);
+      debug.error('Failed to send audio:', error);
       setErrorMessage('Failed to send audio. Please try again.');
       setTimeout(() => setErrorMessage(null), 3000);
     }

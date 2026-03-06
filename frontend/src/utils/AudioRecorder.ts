@@ -3,6 +3,10 @@
  * 使用 MediaRecorder API 录制音频并导出为 WebM/WAV 格式
  */
 
+import { createScopedLogger } from './debug';
+
+const debug = createScopedLogger('AudioRecorder');
+
 export interface RecordingState {
   isRecording: boolean;
   duration: number; // 录制时长（秒）
@@ -72,7 +76,7 @@ export class AudioRecorder {
    */
   async startRecording(): Promise<void> {
     if (this.isRecording) {
-      console.warn('Already recording');
+      debug.warn('Already recording');
       return;
     }
 
@@ -129,7 +133,7 @@ export class AudioRecorder {
       this.notifyStateChange();
 
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      debug.error('Failed to start recording:', error);
       throw error;
     }
   }
@@ -139,7 +143,7 @@ export class AudioRecorder {
    */
   async stopRecording(): Promise<Blob | null> {
     if (!this.isRecording || !this.mediaRecorder) {
-      console.warn('Not recording');
+      debug.warn('Not recording');
       return null;
     }
 
@@ -293,7 +297,7 @@ export class AudioRecorder {
         try {
           track.stop();
         } catch (e) {
-          console.warn('[AudioRecorder] Failed to stop track:', e);
+          debug.warn('[AudioRecorder] Failed to stop track:', e);
         }
       }
       this.stream = null;
