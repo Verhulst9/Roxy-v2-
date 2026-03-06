@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TransitionType } from '../../utils/styles/theme';
-import { ShatterEffect } from './ShatterEffect';
 import { SlashEffect } from './SlashEffect';
 
 interface P5RTransitionProps {
@@ -42,14 +41,6 @@ export function P5RTransition({
 
   // Render appropriate transition effect
   switch (type) {
-    case 'shatter_out':
-    case 'shatter_in':
-      return (
-        <div className={transitionClass}>
-          <ShatterEffect type={type} duration={duration} />
-        </div>
-      );
-
     case 'slash_down':
     case 'slash_up':
       return (
