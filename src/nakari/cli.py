@@ -21,7 +21,7 @@ class CLI:
         self._log = structlog.get_logger("cli")
 
     async def input_loop(self) -> None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         while True:
             line = await loop.run_in_executor(None, sys.stdin.readline)
             line = line.strip()

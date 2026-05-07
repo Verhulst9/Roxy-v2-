@@ -129,12 +129,13 @@ class WebSocketInput:
 
         Responds with a pong message containing server timestamp.
         """
+        now = asyncio.get_running_loop().time()
         pong_message = {
             "version": "1.0",
             "type": "pong",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": now,
             "payload": {
-                "server_time": asyncio.get_event_loop().time(),
+                "server_time": now,
             },
         }
         try:

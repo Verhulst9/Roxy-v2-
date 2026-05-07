@@ -50,7 +50,7 @@ class AudioBroadcaster:
             message = {
                 "version": "1.0",
                 "type": "audio_chunk",
-                "timestamp": asyncio.get_event_loop().time(),
+                "timestamp": asyncio.get_running_loop().time(),
                 "payload": {
                     "chunk_id": f"{self._current_sequence}_{i}",
                     "sequence": self._current_sequence,

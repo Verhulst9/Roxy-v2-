@@ -54,7 +54,7 @@ class WebSocketOutput(OutputEndpoint):
         reply_msg = {
             "version": "1.0",
             "type": "text",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": asyncio.get_running_loop().time(),
             "payload": {
                 "text": message,
                 "isUser": False,

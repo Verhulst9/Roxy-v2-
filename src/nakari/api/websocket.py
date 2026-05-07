@@ -98,15 +98,17 @@ class WebSocketManager:
         self._connections[client_id] = ws
         self._client_ids[ws] = client_id
 
+        now = asyncio.get_running_loop().time()
+
         # Send welcome message
         await ws.send_json(
             {
                 "version": "1.0",
                 "type": "connected",
-                "timestamp": asyncio.get_event_loop().time(),
+                "timestamp": now,
                 "payload": {
                     "client_id": client_id,
-                    "server_time": asyncio.get_event_loop().time(),
+                    "server_time": now,
                 },
             }
         )

@@ -118,7 +118,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "version": "1.0.0",
-            "uptime": asyncio.get_event_loop().time(),
+            "uptime": asyncio.get_running_loop().time(),
             "connections": ws_manager.connection_count if ws_manager else 0,
             "websocket_url": _get_public_websocket_url(),
         }
