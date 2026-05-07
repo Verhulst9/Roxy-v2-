@@ -95,7 +95,8 @@ export function TextInput({
       {/* 语音输入按钮 */}
       <VoiceInputButton
         onRecordingComplete={handleRecordingComplete}
-        disabled={disabled || isRecording || !wsSend}
+        onRecordingChange={setIsRecording}
+        disabled={disabled || !wsSend}
         className="voice-input-wrapper"
         micSensitivity={micSensitivity}
       />

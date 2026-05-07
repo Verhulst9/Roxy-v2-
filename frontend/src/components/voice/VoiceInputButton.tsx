@@ -11,6 +11,7 @@ const debug = createScopedLogger('VoiceInput');
 
 interface VoiceInputButtonProps {
   onRecordingComplete: (audioBlob: Blob, base64Audio: string) => void;
+  onRecordingChange?: (isRecording: boolean) => void;
   disabled?: boolean;
   className?: string;
   micSensitivity?: number; // Microphone sensitivity (0.5 - 2.0)
@@ -23,6 +24,7 @@ interface RecordingState {
 
 export function VoiceInputButton({
   onRecordingComplete,
+  onRecordingChange,
   disabled = false,
   className = '',
   micSensitivity = 1.0,
@@ -32,11 +34,16 @@ export function VoiceInputButton({
     duration: 0,
   });
 
-  // @ts-ignore - audioLevel reserved for future UI visualization
   const [audioLevel, setAudioLevel] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const normalizedAudioLevel = Math.max(0, Math.min(1, audioLevel));
+  const startDisabled = disabled && !recordingState.isRecording;
+
+  useEffect(() => {
+    onRecordingChange?.(recordingState.isRecording);
+  }, [onRecordingChange, recordingState.isRecording]);
 
   // 清理资源
   useEffect(() => {
@@ -104,6 +111,7 @@ export function VoiceInputButton({
         isRecording: false,
         duration: 0,
       });
+      setAudioLevel(0);
     } finally {
       setIsTransitioning(false);
     }
@@ -140,21 +148,21 @@ export function VoiceInputButton({
 
   // 点击处理
   const handleClick = useCallback(() => {
-    if (disabled || isTransitioning) return;
+    if (startDisabled || isTransitioning) return;
 
     if (recordingState.isRecording) {
       handleStopRecording();
     } else {
       handleStartRecording();
     }
-  }, [disabled, isTransitioning, recordingState.isRecording, handleStartRecording, handleStopRecording]);
+  }, [startDisabled, isTransitioning, recordingState.isRecording, handleStartRecording, handleStopRecording]);
 
   return (
     <div className={`voice-input-container ${className}`}>
       <button
         className={`voice-input-button ${recordingState.isRecording ? 'recording' : ''}`}
         onClick={handleClick}
-        disabled={disabled || isTransitioning}
+        disabled={startDisabled || isTransitioning}
         title={isTransitioning ? '处理中...' : recordingState.isRecording ? '点击停止录音' : '点击开始录音'}
         aria-label={isTransitioning ? '处理中' : recordingState.isRecording ? '停止录音' : '开始录音'}
       >
@@ -194,6 +202,19 @@ export function VoiceInputButton({
         )}
       </button>
 
+      {recordingState.isRecording && (
+        <div className="voice-recording-indicator" role="status" aria-live="polite">
+          <span className="voice-timer">
+            {recordingState.duration.toFixed(1)}s
+          </span>
+          <span className="voice-level-bar" aria-hidden="true">
+            <span
+              className="voice-level-fill"
+              style={{ width: `${Math.round(normalizedAudioLevel * 100)}%` }}
+            />
+          </span>
+        </div>
+      )}
     </div>
   );
 }

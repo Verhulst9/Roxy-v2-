@@ -82,6 +82,18 @@ class WebSocketManager:
             client_id: Unique identifier for the client
             ws: The WebSocket connection
         """
+        old_ws = self._connections.get(client_id)
+        if old_ws is not None and old_ws is not ws:
+            self._client_ids.pop(old_ws, None)
+            try:
+                await old_ws.close()
+            except Exception as e:
+                self._log.warning(
+                    "duplicate_client_close_failed",
+                    client_id=client_id,
+                    error=str(e),
+                )
+
         await ws.accept()
         self._connections[client_id] = ws
         self._client_ids[ws] = client_id
@@ -112,15 +124,23 @@ class WebSocketManager:
                 self._pending_callbacks.add(task)
                 task.add_done_callback(self._pending_callbacks.discard)
 
-    def disconnect(self, client_id: str) -> None:
+    def disconnect(self, client_id: str, ws: WebSocket | None = None) -> None:
         """Disconnect a client.
 
         Args:
             client_id: The client to disconnect
+            ws: Optional WebSocket instance. When provided, stale disconnects
+                from a replaced connection will not remove the active client.
         """
-        ws = self._connections.pop(client_id, None)
-        if ws:
+        current_ws = self._connections.get(client_id)
+        if ws is not None and current_ws is not None and current_ws is not ws:
             self._client_ids.pop(ws, None)
+            self._log.info("stale_client_disconnected", client_id=client_id)
+            return
+
+        disconnected_ws = self._connections.pop(client_id, None)
+        if disconnected_ws:
+            self._client_ids.pop(disconnected_ws, None)
 
         # Clean up subscriptions
         for topic, subscribers in self._subscribers.items():
@@ -160,7 +180,7 @@ class WebSocketManager:
             return True
         except Exception as e:
             self._log.warning("send_failed", client_id=client_id, error=str(e))
-            self.disconnect(client_id)
+            self.disconnect(client_id, ws)
             return False
 
     async def broadcast(self, message: dict, topic: str | None = None) -> None:
@@ -172,7 +192,7 @@ class WebSocketManager:
                    subscribers of that topic. Otherwise sends to all.
         """
         if topic:
-            clients = self._subscribers.get(topic, set())
+            clients = set(self._subscribers.get(topic, set()))
         else:
             clients = set(self._connections.keys())
 
@@ -180,7 +200,7 @@ class WebSocketManager:
         tasks = [self.send(client_id, message) for client_id in clients]
         if tasks:
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            failed_count = sum(1 for r in results if isinstance(r, Exception))
+            failed_count = sum(1 for r in results if isinstance(r, Exception) or r is False)
             if failed_count > 0:
                 self._log.warning("broadcast_partial_failure", failed=failed_count, total=len(tasks))
 

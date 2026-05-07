@@ -3,7 +3,7 @@
  * Shifts as a unit when sidebar opens/closes
  */
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 interface MainViewContainerProps {
   children: ReactNode;
@@ -18,11 +18,12 @@ export function MainViewContainer({
   sidebarCollapsed,
   className = '',
 }: MainViewContainerProps) {
-  const isFirstRender = useRef(true);
+  const [canAnimate, setCanAnimate] = useState(false);
 
   // After first render, enable transitions for subsequent state changes
   useEffect(() => {
-    isFirstRender.current = false;
+    const frame = requestAnimationFrame(() => setCanAnimate(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // Determine shift class based on sidebar state
@@ -32,7 +33,7 @@ export function MainViewContainer({
       : '';
 
   // Only add transition class after first render to prevent initial animation
-  const animateClass = isFirstRender.current ? '' : 'can-animate';
+  const animateClass = canAnimate ? 'can-animate' : '';
 
   return (
     <div className={`galgame-main-view ${shiftClass} ${animateClass} ${className}`}>

@@ -106,7 +106,14 @@ class MultiOutputHandler:
         # Send to all endpoints concurrently
         tasks = [output.send(message, **metadata) for output in self._outputs]
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for output, result in zip(self._outputs, results):
+                if isinstance(result, Exception):
+                    self._log.warning(
+                        "output_send_failed",
+                        endpoint=type(output).__name__,
+                        error=str(result),
+                    )
 
     @property
     def output_count(self) -> int:

@@ -42,10 +42,20 @@ function loadStoredState(): StoredSidebarState | null {
   try {
     const stored = localStorage.getItem(SIDEBAR_STATE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        typeof parsed.leftOpen === 'boolean' &&
+        typeof parsed.leftCollapsed === 'boolean' &&
+        typeof parsed.rightOpen === 'boolean'
+      ) {
+        return parsed;
+      }
+      localStorage.removeItem(SIDEBAR_STATE_KEY);
     }
   } catch {
-    // Ignore errors
+    localStorage.removeItem(SIDEBAR_STATE_KEY);
   }
   return null;
 }

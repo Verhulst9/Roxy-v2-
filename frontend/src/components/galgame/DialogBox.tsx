@@ -2,7 +2,7 @@
  * DialogBox - Visual novel style dialogue display
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface DialogBoxProps {
   text: string;
@@ -30,13 +30,10 @@ export function DialogBox({
     cleanText = text;
   }
 
-  const [displayText, setDisplayText] = useState(cleanText);
-
-  // Update display when clean text changes
+  // Notify when clean text changes
   useEffect(() => {
     if (cleanText !== prevTextRef.current) {
       prevTextRef.current = cleanText;
-      setDisplayText(cleanText);
       onComplete?.();
     }
   }, [cleanText, onComplete]);
@@ -44,7 +41,7 @@ export function DialogBox({
   return (
     <div className={`galgame-dialog-box ${className}`}>
       <span className="galgame-dialog-text" style={{ display: 'block' }}>
-        {displayText}
+        {cleanText}
       </span>
     </div>
   );

@@ -47,6 +47,7 @@ OPENAI_API_KEY=your_api_key
 NAKARI_API_ENABLED=true          # 启用 Live2D API
 NAKARI_API_HOST=127.0.0.1
 NAKARI_API_PORT=8002
+NAKARI_PUBLIC_WS_URL=           # 可选：反向代理/公网部署时 health 返回的 WebSocket 地址
 AUTO_SHUTDOWN_ON_DISCONNECT=false  # 关闭浏览器时自动退出后端
 AUTO_SHUTDOWN_DELAY_SECONDS=30     # 自动关闭延迟时间（秒）
 NEO4J_URI=bolt://localhost:7687
@@ -182,4 +183,3 @@ npm run dev
 - 新增 Live2D 前端集成
 - 新增 WebSocket API
 - 修复前后端连接问题
-

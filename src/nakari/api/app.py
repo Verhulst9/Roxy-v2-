@@ -28,6 +28,44 @@ ws_manager: WebSocketManager | None = None
 ws_input = None
 
 
+def _get_allowed_origins() -> list[str]:
+    """Return CORS origins from env, falling back to development defaults."""
+    configured_origins = [
+        origin.strip()
+        for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+    if configured_origins:
+        return configured_origins
+
+    if os.getenv("ENVIRONMENT", "development") == "production":
+        return []
+
+    return [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5182",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+        "http://127.0.0.1:5182",
+    ]
+
+
+def _get_public_websocket_url() -> str:
+    """Return the WebSocket URL shown by health checks."""
+    configured_url = os.getenv("NAKARI_PUBLIC_WS_URL", "").strip()
+    if configured_url:
+        return configured_url
+
+    host = os.getenv("NAKARI_API_HOST", "127.0.0.1")
+    port = os.getenv("NAKARI_API_PORT", "8002")
+    return f"ws://{host}:{port}/api/ws"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan manager."""
@@ -51,30 +89,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS middleware - security conscious configuration
-    # Default to development-friendly settings, override via ALLOWED_ORIGINS env var
-    allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
-
-    # If ALLOWED_ORIGINS is not set, use sensible defaults based on environment
-    if not allowed_origins or allowed_origins == [""]:
-        # In development, allow common frontend ports
-        if os.getenv("ENVIRONMENT", "development") == "production":
-            # Production: default to empty (disallow all) - must be explicitly configured
-            allowed_origins = []
-        else:
-            # Development: allow common frontend ports
-            allowed_origins = [
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175",
-                "http://localhost:5182",  # Current frontend port
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:5174",
-                "http://127.0.0.1:5175",
-                "http://127.0.0.1:5182",
-            ]
+    allowed_origins = _get_allowed_origins()
 
     app.add_middleware(
         CORSMiddleware,
@@ -105,7 +120,7 @@ def create_app() -> FastAPI:
             "version": "1.0.0",
             "uptime": asyncio.get_event_loop().time(),
             "connections": ws_manager.connection_count if ws_manager else 0,
-            "websocket_url": "ws://localhost:8000/api/ws",
+            "websocket_url": _get_public_websocket_url(),
         }
 
     @app.websocket("/api/ws")
@@ -148,7 +163,7 @@ def create_app() -> FastAPI:
         except Exception as e:
             _log.error("websocket_error", client_id=client_id, error=str(e), exc_info=True)
         finally:
-            ws_manager.disconnect(client_id)
+            ws_manager.disconnect(client_id, websocket)
 
     return app
 
